@@ -1,0 +1,118 @@
+from flask import Flask, session, request,render_template, url_for, redirect
+from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
+import sqlite3
+
+app = Flask(__name__)
+app.secret_key = 'superdificil'
+
+
+
+# classe base do usuario
+class User(UserMixin):
+    def __init__(self,id,nome,email,senha):
+        self.id = id
+        self.nome = nome
+        self.email = email
+        self.senha = senha
+
+# conexâo com o banco de dados
+def get_conexao():
+    conn = sqlite3.connect('database.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+# adiciona o usuario ao banco
+def add_user(nome,email,senha):
+    password_hash =generate_password_hash(senha)
+    conn = get_conexao()
+    conn.cursor()
+    conn.execute('INSERT INTO users (email, password_hash) VALUES (?, ?, ?)', (nome, email, password_hash,))
+    conn.commit()
+    conn.close()
+
+# Função para encontrar um usuário pelo e-mail
+def find_user_by_email(email):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+    user = cursor.fetchone()
+    conn.close()
+    if user:
+        return True
+    else:
+        return False
+    
+# Função para encontrar um usuário pelo ID
+def find_user_by_id(user_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+    user = cursor.fetchone()
+    conn.close()
+    return user
+
+# Função usada pelo Flask-Login para carregar o usuário a partir do ID
+
+
+#pagina base
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/dashboard')
+def dash():
+    if 'user' not in session:
+        return redirect(url_for('index'))
+    return render_template('dashboard.html', nome=session['user'])
+
+@app.route('/login', methods=['POST', 'GET'])
+def login():
+    # se já tá logado
+    conn = get_conexao()
+    if 'user' in session:
+        return redirect (url_for('dash')) #vai pra o dashboard
+
+    if request.method == 'GET':
+        return render_template('login.html')
+    else:
+        nome = request.form['nome']
+        senha = request.form['senha']
+        email = request.form['email']
+
+        user = find_user_by_email
+        # Valida o e-mail e a senha usando check_password_hash()
+        if user and check_password_hash(user[2], senha):  # user[2] contém o password_hash
+            user_obj = User(id=user[0], email=user[1])
+            login_user(user_obj)
+            return render_template('dashboard.html')
+        else:
+            flash('E-mail ou senha incorretos.')
+
+#registrar usuario 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    conn = get_conexao()
+    # se já tá logado
+    if 'user' in session:
+        return redirect (url_for('dash')) #vai pra o dashboard
+
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    else:
+        nome = request.form['nome']
+        email = request.form['email']
+        senha = request.form['senha']
+
+        adicionar = add_user(nome,email,senha)
+        
+        session['user'] = nome
+        return redirect(url_for('dash'))
+        conn.close()
+        
+@app.route('/logout', methods=['POST'])
+def logout():
+    if 'user' in session:
+        session.pop('user', None)
+        return redirect(url_for('index'))
