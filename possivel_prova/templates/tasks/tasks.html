@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tasks</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 600px;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .task {
+            border-bottom: 1px solid #ddd;
+            padding: 10px 0;
+        }
+        .task:last-child {
+            border-bottom: none;
+        }
+        .task-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+        }
+        .task-desc {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #777;
+        }
+        .actions {
+            margin-top: 10px;
+        }
+        .actions a {
+            text-decoration: none;
+            color: #007BFF;
+            margin-right: 10px;
+        }
+        .actions a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Tasks</h1>
+        {% if tasks %}
+            {% for task in tasks %}
+                <div class="task">
+                    <div class="task-title">{{ task.titulo }}</div>
+                    <div class="task-desc">{{ task.descricao }}</div>
+                    <div class="actions">
+                        <a href="/task/edit/{{ task.id }}">Edit</a>
+                        <a href="/task/delete/{{ task.id }}" style="color: red;">Delete</a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p>No tasks available. <a href="/task/add">Add one</a>!</p>
+        {% endif %}
+    </div>
+</body>
+</html>
